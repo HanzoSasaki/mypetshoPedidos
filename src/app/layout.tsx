@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Pedidos Socliquei',
+  title: 'Pedidos mypetshopoficial',
   description: 'Visualize e gerencie os pedidos recebidos.',
 };
 
