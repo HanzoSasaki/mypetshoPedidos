@@ -292,7 +292,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-primary font-headline">
-                Pedidos Socliquei
+                Pedidos mypetshopoficial
               </h1>
               <p className="mt-1 text-base text-muted-foreground">
                 Gestão de pedidos e variações
