@@ -205,30 +205,8 @@ export default function Home() {
                       </p>
                   </CardContent>
               </Card>
-              <Card className="animate-fade-in" style={{animationDelay: '50ms'}}>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Total de Areia</CardTitle>
-                      <div className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{totalAreia}</div>
-                      <p className="text-xs text-muted-foreground">
-                          Soma de todos os produtos de areia.
-                      </p>
-                  </CardContent>
-              </Card>
-              <Card className="animate-fade-in sm:col-span-2 lg:col-span-1" style={{animationDelay: '100ms'}}>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Total de pacotes a embalar</CardTitle>
-                      <Box className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{totalPacotes}</div>
-                      <p className="text-xs text-muted-foreground">
-                          Soma de todos os outros produtos.
-                      </p>
-                  </CardContent>
-              </Card>
+          
+              
             </div>
             <VariationsSummary 
               variations={sortedVariations} 
