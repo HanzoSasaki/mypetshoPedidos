@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Order, OrderStatus } from "@/lib/types";
@@ -50,19 +51,21 @@ export default function OrderCard({ order, onStatusChange }: OrderCardProps) {
     <Card className={cn("transform-gpu transition-all duration-300 hover:shadow-lg overflow-hidden", currentStatus.cardClass)}>
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value={`order-${order.id}`} className="border-b-0">
-          <AccordionTrigger className="flex flex-col sm:flex-row w-full items-start sm:items-center justify-between p-4 md:p-6 text-lg font-semibold hover:no-underline hover:bg-black/5 dark:hover:bg-white/5 data-[state=open]:bg-black/5 data-[state=open]:dark:bg-white/5 [&>svg]:text-primary">
-            <div className="flex items-center gap-3 w-full mb-2 sm:mb-0">
-              <span className="font-headline text-primary truncate">Pedido #{order.id}</span>
-              <Badge className={cn("text-xs font-semibold", currentStatus.badgeClass)}>
-                {currentStatus.icon}
-                {currentStatus.label}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground self-start sm:self-center shrink-0">
-                <Package className="h-4 w-4" />
-                <span>{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
-            </div>
-          </AccordionTrigger>
+            <AccordionTrigger className="p-4 md:p-6 text-left hover:no-underline hover:bg-accent/50 dark:hover:bg-accent/50 data-[state=open]:bg-accent/50 [&>svg]:shrink-0">
+                <div className="flex flex-col items-start w-full mr-4">
+                    <div className="flex items-center justify-between w-full">
+                        <h3 className="font-headline text-xl md:text-2xl text-primary">Pedido #{order.id}</h3>
+                        <Badge className={cn("text-xs md:text-sm font-semibold", currentStatus.badgeClass)}>
+                            {currentStatus.icon}
+                            {currentStatus.label}
+                        </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm md:text-base font-medium text-muted-foreground mt-2">
+                        <Package className="h-4 w-4 md:h-5 md:w-5" />
+                        <span>{totalItems} {totalItems === 1 ? 'item' : 'itens'} no pedido</span>
+                    </div>
+                </div>
+            </AccordionTrigger>
           <AccordionContent>
             <div className="px-6 pb-6 pt-0 space-y-4">
               {order.products.length > 0 ? (

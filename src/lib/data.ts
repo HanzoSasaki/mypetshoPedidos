@@ -4,14 +4,14 @@ import { type Order, type Product, type ToyStockItem, type OrderStatus } from '.
 const ORDERS_DATA_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_7hctp57fVdF-zKrG2HHbp6TXIqmC8vIQmIemlc5G1iljwIYgNPdxcQHxhejyI-45zLAaUVw0nCHE/pub?gid=0&single=true&output=tsv';
 
-const TOY_STOCK_DATA_URL = 
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRlxOIKTpuVPoSbKUrAXoMWUxDMAbVfxWvCvdV93ZSlG3wk-NMhWHqHZbvV37RSYGrdek9GnVoz9i3p/pub?output=tsv';
+const SAND_PRICES_DATA_URL = 
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3q3fYdjWUZ6ovfvJrBunc5DeaUjDYShQ-5ZwnhnrvpwTPZXBxBt8jJKvYsiM0d1crGMvrSSvbgGqk/pub?output=tsv';
 
 function parseProducts(productString: string): Product[] {
   if (!productString || !productString.trim() || productString.trim() === '[0]') return [];
 
   // Normalize string: remove quotes, standardize whitespace, and handle line breaks within the cell.
-  const cleanedString = productString.replace(/"/g, '').replace(/(\r\n|\n|\r)/gm, " ").replace(/\s+/g, ' ').trim();
+  const cleanedString = productString.replace(/\"/g, '').replace(/(\r\n|\n|\r)/gm, " ").replace(/\s+/g, ' ').trim();
   const products: Product[] = [];
   
   // Split by product indicators like "[1]", "[2]", etc.
@@ -121,11 +121,11 @@ export async function fetchAndParseOrders(): Promise<Order[]> {
   }
 }
 
-export async function fetchToyStock(): Promise<ToyStockItem[]> {
-  try {
-    const response = await fetch(TOY_STOCK_DATA_URL, { next: { revalidate: 60 } });
+export async function fetchSandPrices(): Promise<any[]> {
+    try {
+    const response = await fetch(SAND_PRICES_DATA_URL, { next: { revalidate: 60 } });
     if (!response.ok) {
-      console.error(`Failed to fetch toy stock data: ${response.statusText}`);
+      console.error(`Failed to fetch sand prices data: ${response.statusText}`);
       return [];
     }
     const tsvData = await response.text();
@@ -136,37 +136,22 @@ export async function fetchToyStock(): Promise<ToyStockItem[]> {
     }
 
     const header = rows[0].split('\t').map(h => h.trim());
-    const skuIndex = header.indexOf('SKU');
-    const productIndex = header.indexOf('Produto');
-    const quantityIndex = header.indexOf('Quantidade (und)');
-    
-    if (skuIndex === -1 || productIndex === -1 || quantityIndex === -1) {
-      console.error('Required columns (SKU, Produto, Quantidade (und)) not found in toy stock sheet.');
-      return [];
+    const priceRows = rows.slice(1);
+
+    const prices = priceRows
+        .map(row => {
+            const columns = row.split('\t');
+            const priceData: { [key: string]: string } = {};
+            header.forEach((key, index) => {
+                priceData[key] = columns[index];
+            });
+            return priceData;
+        })
+        .filter(item => item.nome && item.Custo); // Basic validation
+
+    return prices;
+    } catch (error) {
+        console.error('Error fetching or parsing sand prices:', error);
+        return [];
     }
-
-    const stockRows = rows.slice(1);
-
-    const stockItems: ToyStockItem[] = stockRows
-      .map(row => {
-        const columns = row.split('\t');
-        
-        if (columns.length <= Math.max(skuIndex, productIndex, quantityIndex)) return null;
-
-        const sku = columns[skuIndex].trim();
-        const product = columns[productIndex].trim();
-        const quantityStr = columns[quantityIndex].trim();
-        const quantity = parseInt(quantityStr, 10);
-
-        if (!sku || !product || isNaN(quantity)) return null;
-        
-        return { sku, product, quantity };
-      })
-      .filter((item): item is ToyStockItem => item !== null);
-
-    return stockItems;
-  } catch (error) {
-    console.error('Error fetching or parsing toy stock:', error);
-    return [];
-  }
 }
