@@ -29,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] => {
   return orders
@@ -42,6 +43,12 @@ const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] =
       if (a.status === 'packed' && b.status === 'pending') return 1;
       return 0;
     });
+};
+
+const getImagePath = (variationName: string) => {
+  const imageName = variationName.trim().replace(/\s+/g, ' ');
+  const encodedImageName = encodeURIComponent(imageName).replace(/\(/g, '%28').replace(/\)/g, '%29');
+  return `/img areia/${encodedImageName}.jpg`;
 };
 
 interface VariationDetailViewProps {
@@ -124,11 +131,7 @@ export default function VariationDetailView({
           <span className="font-bold">Sucesso!</span>
         </div>
       ),
-      description: `${
-        orderIdsToUpdate.length
-      } ${
-        orderIdsToUpdate.length === 1 ? "pedido foi atualizado" : "pedidos foram atualizados"
-      } para "${newStatus === "packed" ? "Embalado" : "Pendente"}".`,
+      description: `${orderIdsToUpdate.length} ${orderIdsToUpdate.length === 1 ? "pedido foi atualizado" : "pedidos foram atualizados"} para "${newStatus === "packed" ? "Embalado" : "Pendente"}".`,
       duration: 3000,
     });
     setSelectedOrderIds(new Set());
@@ -144,7 +147,14 @@ export default function VariationDetailView({
             <ChevronLeft className="h-6 w-6" />
           </Button>
           <div className="flex items-center gap-3 overflow-hidden">
-            <ShoppingBag className="h-6 w-6 text-primary flex-shrink-0" />
+             <div className="w-12 h-12 relative rounded-md overflow-hidden border">
+                <Image
+                  src={getImagePath(variation.name)}
+                  alt={variation.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             <div className="flex flex-col overflow-hidden">
               <span className="font-medium text-sm text-muted-foreground -mb-1">
                 Pedidos com a Variação

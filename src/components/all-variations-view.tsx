@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] => {
   return orders.filter((order) =>
@@ -42,6 +43,11 @@ const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] =
       (p) => p.variation === variation.name && p.sku === variation.sku
     )
   );
+};
+
+const getImagePath = (variationName: string) => {
+  const imageName = variationName.trim().replace(/\s+/g, ' ');
+  return `/img_areia/${imageName}.jpg`;
 };
 
 const VariationItem = ({
@@ -132,19 +138,23 @@ const VariationItem = ({
           cardClass
         )}
       >
-        <div className="flex-grow space-y-2 overflow-hidden">
-          <div className="flex items-center gap-3">
-            <Palette className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-            <p className="font-medium text-foreground truncate">{variation.name}</p>
-          </div>
-          {variation.sku && (
-            <div className="flex items-center gap-3">
-              <Code className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold truncate">
-                SKU: {variation.sku}
-              </p>
+        <div className="flex-grow flex items-center gap-3 overflow-hidden">
+           <div className="w-12 h-12 relative rounded-md overflow-hidden border flex-shrink-0">
+              <Image
+                src={getImagePath(variation.name)}
+                alt={variation.name}
+                fill
+                className="object-cover"
+              />
             </div>
-          )}
+          <div className="flex-grow flex flex-col overflow-hidden">
+              <p className="font-medium text-foreground truncate">{variation.name}</p>
+              {variation.sku && (
+                <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold truncate">
+                  SKU: {variation.sku}
+                </p>
+              )}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-sm font-semibold text-primary ml-4 shrink-0">
           <Hash className="h-4 w-4" />

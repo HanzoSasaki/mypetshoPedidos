@@ -25,6 +25,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
+
+const getVariationImage = (variationName: string) => {
+    const imageName = variationName.trim().replace(/\s+/g, ' ');
+    return `/img_areia/${imageName}.jpg`;
+};
 
 const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] => {
     return orders.filter(order => 
@@ -87,17 +93,17 @@ const VariationItem = ({ variation, orders, onBulkStatusChange, onViewDetails }:
             <div onClick={() => onViewDetails(variation)} className={cn("flex-grow flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-all duration-200", cardClass)}>
                 <div className="flex-grow space-y-2 overflow-hidden">
                     <div className='flex items-center gap-3'>
-                        <Palette className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                        <p className="font-medium text-foreground truncate">{variation.name}</p>
-                    </div>
-                    {variation.sku && (
-                        <div className="flex items-center gap-3">
-                            <Code className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                            <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold truncate">
-                                SKU: {variation.sku}
-                            </p>
+                        <Image src={getVariationImage(variation.name)} alt={variation.name} width={40} height={40} className="rounded-md" />
+                        <div className="flex-grow space-y-0.5 overflow-hidden">
+                            <p className="font-medium text-foreground truncate">{variation.name}</p>
+                            {variation.sku && (
+                                <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 font-semibold">
+                                    <Code className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    <p className="truncate">SKU: {variation.sku}</p>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-primary ml-4 shrink-0">
                     <Hash className="h-4 w-4" />
@@ -212,6 +218,3 @@ export default function VariationsSummary({ variations, allOrders, onBulkStatusC
     </Card>
   );
 }
-    
-
-    
