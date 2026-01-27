@@ -1,6 +1,6 @@
 
 "use client"
-import { BarChart3, Palette, Hash, Code, Eye, Search, CheckCheck, Undo2 } from 'lucide-react';
+import { BarChart3, Palette, Hash, Code, Eye, Search, CheckCheck, Undo2, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -38,7 +38,7 @@ const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] =
     );
 }
 
-const VariationItem = ({ variation, orders, onBulkStatusChange, onViewDetails }: { variation: Variation, orders: Order[], onBulkStatusChange: (orderIds: string[], newStatus: OrderStatus) => void, onViewDetails: (variation: Variation) => void }) => {
+const VariationItem = ({ variation, orders, sandPrices = [], onBulkStatusChange, onViewDetails }: { variation: Variation, orders: Order[], sandPrices?: any[], onBulkStatusChange: (orderIds: string[], newStatus: OrderStatus) => void, onViewDetails: (variation: Variation) => void }) => {
     const { toast } = useToast();
     
     const ordersForVariation = useMemo(() => getOrdersForVariation(variation, orders), [variation, orders]);
@@ -88,6 +88,9 @@ const VariationItem = ({ variation, orders, onBulkStatusChange, onViewDetails }:
         ? "bg-green-100/50 border-green-200 hover:bg-green-100/80 dark:bg-green-900/10 dark:border-green-800/30 dark:hover:bg-green-900/20" 
         : "bg-yellow-100/50 border-yellow-200 hover:bg-yellow-100/80 dark:bg-yellow-900/10 dark:border-yellow-800/30 dark:hover:bg-yellow-900/20";
 
+    const variationPrice = sandPrices.find(p => p.nome === variation.name);
+    const totalCost = variationPrice ? parseFloat(variationPrice.Custo.replace(',', '.')) * variation.quantity : 0;
+
     return (
         <div className="flex items-center gap-2">
             <div onClick={() => onViewDetails(variation)} className={cn("flex-grow flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-all duration-200", cardClass)}>
@@ -105,9 +108,17 @@ const VariationItem = ({ variation, orders, onBulkStatusChange, onViewDetails }:
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-primary ml-4 shrink-0">
-                    <Hash className="h-4 w-4" />
-                    <span>{variation.quantity}</span>
+                <div className="flex flex-col items-end gap-2 text-sm font-semibold text-primary ml-4 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <Hash className="h-4 w-4" />
+                        <span>{variation.quantity}</span>
+                    </div>
+                    {totalCost > 0 && (
+                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <DollarSign className="h-3 w-3" />
+                            <span>{totalCost.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col">
@@ -176,12 +187,13 @@ const VariationItem = ({ variation, orders, onBulkStatusChange, onViewDetails }:
 interface VariationsSummaryProps {
     variations: Variation[];
     allOrders: Order[];
+    sandPrices?: any[];
     onBulkStatusChange: (orderIds: string[], newStatus: OrderStatus) => void;
     onViewVariationDetails: (variation: Variation) => void;
     onViewAll: () => void;
 }
 
-export default function VariationsSummary({ variations, allOrders, onBulkStatusChange, onViewVariationDetails, onViewAll }: VariationsSummaryProps) {
+export default function VariationsSummary({ variations, allOrders, sandPrices, onBulkStatusChange, onViewVariationDetails, onViewAll }: VariationsSummaryProps) {
   if (variations.length === 0) {
     return null;
   }
@@ -203,7 +215,7 @@ export default function VariationsSummary({ variations, allOrders, onBulkStatusC
       <CardContent>
         <div className="space-y-3">
           {topVariations.map((variation, index) => (
-            <VariationItem key={`${variation.sku}-${variation.name}-${index}`} variation={variation} orders={allOrders} onBulkStatusChange={handleBulkChange} onViewDetails={onViewVariationDetails}/>
+            <VariationItem key={`${variation.sku}-${variation.name}-${index}`} variation={variation} orders={allOrders} sandPrices={sandPrices} onBulkStatusChange={handleBulkChange} onViewDetails={onViewVariationDetails}/>
           ))}
         </div>
       </CardContent>

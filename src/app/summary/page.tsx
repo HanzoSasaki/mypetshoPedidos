@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { fetchAndParseOrders, fetchToyStock } from '@/lib/data';
+import { fetchAndParseOrders, fetchToyStock, fetchSandPrices } from '@/lib/data';
 import { Package, Truck } from 'lucide-react';
 import { type Order, type Product, type Variation, type OrderStatus, type ToyStockItem } from '@/lib/types';
 import VariationsSummary from '@/components/variations-summary';
@@ -24,6 +24,7 @@ export default function SummaryPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [toyStock, setToyStock] = useState<ToyStockItem[]>([]);
+  const [sandPrices, setSandPrices] = useState<any[]>([]);
   const [selectedVariation, setSelectedVariation] = useState<Variation | null>(null);
   const [viewingAllVariations, setViewingAllVariations] = useState(false);
 
@@ -31,12 +32,14 @@ export default function SummaryPage() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const [fetchedOrders, fetchedToyStock] = await Promise.all([
+      const [fetchedOrders, fetchedToyStock, fetchedSandPrices] = await Promise.all([
         fetchAndParseOrders(),
-        fetchToyStock()
+        fetchToyStock(),
+        fetchSandPrices(),
       ]);
       setOrders(fetchedOrders);
       setToyStock(fetchedToyStock);
+      setSandPrices(fetchedSandPrices);
       setLoading(false);
     }
     loadData();
@@ -92,6 +95,7 @@ export default function SummaryPage() {
         <AllVariationsView
           variations={sortedVariations}
           allOrders={orders}
+          sandPrices={sandPrices}
           onBulkStatusChange={handleBulkOrderStatusChange}
           onViewVariationDetails={setSelectedVariation}
           onBack={() => setViewingAllVariations(false)}
@@ -129,6 +133,7 @@ export default function SummaryPage() {
             <VariationsSummary 
               variations={sortedVariations} 
               allOrders={orders} 
+              sandPrices={sandPrices}
               onBulkStatusChange={handleBulkOrderStatusChange} 
               onViewVariationDetails={setSelectedVariation}
               onViewAll={() => setViewingAllVariations(true)}

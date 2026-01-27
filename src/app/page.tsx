@@ -83,25 +83,45 @@ export default function Home() {
   const handleCopyToClipboard = () => {
     const pendingOrders = orders.filter(o => o.status === 'pending');
     const totalPendingOrders = pendingOrders.length;
+    const currentDate = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    const ordersPerVariation = new Map<string, number>();
+    const variationsInPendingOrders = new Map<string, { quantity: number; orderIds: Set<string> }>();
 
     pendingOrders.forEach(order => {
-      const uniqueVariationsInOrder = [...new Set(order.products.map(p => p.variation).filter(v => v))];
-      uniqueVariationsInOrder.forEach(variationName => {
-        ordersPerVariation.set(variationName, (ordersPerVariation.get(variationName) || 0) + 1);
+      order.products.forEach(product => {
+        if (product.variation) {
+          const entry = variationsInPendingOrders.get(product.variation) || { quantity: 0, orderIds: new Set() };
+          entry.quantity += product.quantity;
+          entry.orderIds.add(order.id);
+          variationsInPendingOrders.set(product.variation, entry);
+        }
       });
     });
 
-    let text = `*Resumo de Pedidos Pendentes (${totalPendingOrders})*\n\n`;
-    text += `*Pedidos por Variação:*\n`;
+    let totalOverallCost = 0;
+    
+    let text = `*Resumo de Pedidos Pendentes*\n`;
+    text += `*Data:* ${currentDate}\n`;
+    text += `*Total de Pedidos:* ${totalPendingOrders}\n\n`;
+    text += `*Variações:*\n`;
 
-    const sortedSummary = [...ordersPerVariation.entries()]
-      .sort(([, countA], [, countB]) => countB - countA);
-      
-    sortedSummary.forEach(([variationName, count]) => {
-      text += `- ${variationName}: ${count} ${count > 1 ? 'pedidos' : 'pedido'}\n`;
+    const sortedSummary = [...variationsInPendingOrders.entries()]
+      .sort((a, b) => b[1].quantity - a[1].quantity);
+
+    sortedSummary.forEach(([variationName, data]) => {
+      const priceInfo = sandPrices.find(p => p.nome === variationName);
+      const cost = priceInfo ? parseFloat(priceInfo.Custo.replace(',', '.')) * data.quantity : 0;
+      totalOverallCost += cost;
+      const orderCount = data.orderIds.size;
+
+      text += `- ${variationName}: ${data.quantity} unids`;
+      if (cost > 0) {
+        text += ` (Custo: R$${cost.toFixed(2).replace('.', ',')})`;
+      }
+      text += ` - ${orderCount} ${orderCount > 1 ? 'pedidos' : 'pedido'}\n`;
     });
+
+    text += `\n*Custo Total de Todas as Variações: R$${totalOverallCost.toFixed(2).replace('.', ',')}*`;
 
     setSummaryText(text);
     setIsCopyDialogOpen(true);
@@ -137,6 +157,7 @@ export default function Home() {
         <AllVariationsView
           variations={sortedVariations}
           allOrders={orders}
+          sandPrices={sandPrices}
           onBulkStatusChange={handleBulkOrderStatusChange}
           onViewVariationDetails={setSelectedVariation}
           onBack={() => setViewingAllVariations(false)}
@@ -188,6 +209,7 @@ export default function Home() {
         <VariationsSummary 
           variations={sortedVariations} 
           allOrders={orders} 
+          sandPrices={sandPrices}
           onBulkStatusChange={handleBulkOrderStatusChange} 
           onViewVariationDetails={setSelectedVariation}
           onViewAll={() => setViewingAllVariations(true)}
