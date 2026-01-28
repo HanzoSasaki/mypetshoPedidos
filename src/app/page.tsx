@@ -106,15 +106,15 @@ export default function Home() {
     text += `*Variações:*\n`;
 
     const sortedSummary = [...variationsInPendingOrders.entries()]
-      .sort((a, b) => b[1].quantity - a[1].quantity);
+      .sort((a, b) => b[1].orderIds.size - a[1].orderIds.size);
 
     sortedSummary.forEach(([variationName, data]) => {
       const priceInfo = sandPrices.find(p => p.nome === variationName);
-      const cost = priceInfo ? parseFloat(priceInfo.Custo.replace(',', '.')) * data.quantity : 0;
-      totalOverallCost += cost;
       const orderCount = data.orderIds.size;
+      const cost = priceInfo ? parseFloat(priceInfo.Custo.replace(',', '.')) * orderCount : 0;
+      totalOverallCost += cost;
 
-      text += `- ${variationName}: ${data.quantity} unids`;
+      text += `- ${variationName}:`;
       if (cost > 0) {
         text += ` (Custo: R$${cost.toFixed(2).replace('.', ',')})`;
       }

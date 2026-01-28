@@ -1,7 +1,7 @@
 
 "use client"
-import { BarChart3, Palette, Hash, Code, Eye, Search, CheckCheck, Undo2, ArrowLeft, DollarSign } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Palette, Hash, Code, Search, CheckCheck, Undo2, ArrowLeft, Copy, Package } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,15 +39,16 @@ const getOrdersForVariation = (variation: Variation, orders: Order[]): Order[] =
     );
 }
 
-const VariationItem = ({ variation, orders, sandPrices = [], onBulkStatusChange, onViewDetails }: { variation: Variation, orders: Order[], sandPrices?: any[], onBulkStatusChange: (orderIds: string[], newStatus: OrderStatus) => void, onViewDetails: (variation: Variation) => void }) => {
+const VariationItem = ({ variation, orders, onBulkStatusChange, onViewDetails }: { variation: Variation, orders: Order[], onBulkStatusChange: (orderIds: string[], newStatus: OrderStatus) => void, onViewDetails: (variation: Variation) => void }) => {
     const { toast } = useToast();
     
     const ordersForVariation = useMemo(() => getOrdersForVariation(variation, orders), [variation, orders]);
-    
+    const orderCount = ordersForVariation.length;
+
     const allPacked = useMemo(() => {
-        if (ordersForVariation.length === 0) return false;
+        if (orderCount === 0) return false;
         return ordersForVariation.every(o => o.status === 'packed');
-    }, [ordersForVariation]);
+    }, [ordersForVariation, orderCount]);
 
     const handleMarkAll = useCallback((newStatus: 'packed' | 'pending') => {
         const ordersToUpdate = newStatus === 'packed'
@@ -88,9 +89,6 @@ const VariationItem = ({ variation, orders, sandPrices = [], onBulkStatusChange,
     const cardClass = allPacked 
         ? "bg-green-100/50 border-green-200 hover:bg-green-100/80 dark:bg-green-900/10 dark:border-green-800/30 dark:hover:bg-green-900/20" 
         : "bg-yellow-100/50 border-yellow-200 hover:bg-yellow-100/80 dark:bg-yellow-900/10 dark:border-yellow-800/30 dark:hover:bg-yellow-900/20";
-    
-    const variationPrice = sandPrices.find(p => p.nome === variation.name);
-    const totalCost = variationPrice ? parseFloat(variationPrice.Custo.replace(',', '.')) * variation.quantity : 0;
 
     return (
         <div className="flex items-center gap-2">
@@ -112,14 +110,8 @@ const VariationItem = ({ variation, orders, sandPrices = [], onBulkStatusChange,
                 <div className="flex flex-col items-end gap-2 text-sm font-semibold text-primary ml-4 shrink-0">
                     <div className="flex items-center gap-2">
                         <Hash className="h-4 w-4" />
-                        <span>{variation.quantity}</span>
+                        <span>{orderCount}</span>
                     </div>
-                    {totalCost > 0 && (
-                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <DollarSign className="h-3 w-3" />
-                            <span>{totalCost.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                    )}
                 </div>
             </div>
             <div className="flex flex-col">
@@ -188,14 +180,14 @@ const VariationItem = ({ variation, orders, sandPrices = [], onBulkStatusChange,
 interface AllVariationsViewProps {
     variations: Variation[];
     allOrders: Order[];
-    sandPrices?: any[];
     onBulkStatusChange: (orderIds: string[], newStatus: OrderStatus) => void;
     onViewVariationDetails: (variation: Variation) => void;
     onBack: () => void;
 }
 
-export default function AllVariationsView({ variations, allOrders, sandPrices = [], onBulkStatusChange, onViewVariationDetails, onBack }: AllVariationsViewProps) {
+export default function AllVariationsView({ variations, allOrders, onBulkStatusChange, onViewVariationDetails, onBack }: AllVariationsViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
   
   const handleBulkChange = useCallback((orderIds: string[], newStatus: OrderStatus) => {
     onBulkStatusChange(orderIds, newStatus);
@@ -209,17 +201,47 @@ export default function AllVariationsView({ variations, allOrders, sandPrices = 
     );
   }, [variations, searchTerm]);
 
-  const totalQuantity = useMemo(() => {
-      return filteredVariations.reduce((acc, v) => acc + v.quantity, 0);
-  }, [filteredVariations]);
+ const totalUniqueOrders = useMemo(() => {
+    const orderIds = new Set();
+    filteredVariations.forEach(variation => {
+        const ordersForVar = getOrdersForVariation(variation, allOrders);
+        ordersForVar.forEach(order => orderIds.add(order.id));
+    });
+    return orderIds.size;
+  }, [filteredVariations, allOrders]);
 
-  const totalCost = useMemo(() => {
-    return filteredVariations.reduce((total, variation) => {
-      const variationPrice = sandPrices.find(p => p.nome === variation.name);
-      const cost = variationPrice ? parseFloat(variationPrice.Custo.replace(',', '.')) * variation.quantity : 0;
-      return total + cost;
-    }, 0);
-  }, [filteredVariations, sandPrices]);
+  const handleCopySummary = useCallback(() => {
+    if (filteredVariations.length === 0) {
+        toast({
+            title: "Nenhuma variação para resumir",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    const summaryLines = filteredVariations.map(variation => {
+        const ordersForVariation = getOrdersForVariation(variation, allOrders);
+        const totalOrders = ordersForVariation.length;
+        const totalUnits = variation.quantity;
+        return `${variation.name} - ${totalOrders} pedidos - ${totalUnits} unidades`;
+    });
+
+    const summaryText = "Resumo de Variações:\n" + summaryLines.join('\n');
+    
+    navigator.clipboard.writeText(summaryText).then(() => {
+        toast({
+            title: "Resumo Copiado!",
+            description: "O resumo das variações foi copiado para a área de transferência.",
+        });
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        toast({
+            title: "Erro ao Copiar",
+            description: "Não foi possível copiar o resumo.",
+            variant: "destructive",
+        });
+    });
+}, [filteredVariations, allOrders, toast]);
 
   return (
     <Card className="animate-fade-in w-full mx-auto max-w-4xl">
@@ -233,14 +255,20 @@ export default function AllVariationsView({ variations, allOrders, sandPrices = 
                     <span>Todas as Variações ({filteredVariations.length})</span>
                 </CardTitle>
                 <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Hash className="h-4 w-4" />
-                    <span>{totalQuantity}</span>
-                    {totalCost > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <DollarSign className="h-3 w-3" />
-                            <span>{totalCost.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                    )}
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button onClick={handleCopySummary} variant="ghost" size="icon">
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Copiar resumo para WhatsApp</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <Package className="h-4 w-4" />
+                    <span>{totalUniqueOrders}</span>
                 </div>
             </div>
              <div className="relative mt-4">
@@ -260,7 +288,6 @@ export default function AllVariationsView({ variations, allOrders, sandPrices = 
                     key={`${variation.sku}-${variation.name}-${index}`} 
                     variation={variation} 
                     orders={allOrders} 
-                    sandPrices={sandPrices}
                     onBulkStatusChange={handleBulkChange} 
                     onViewDetails={onViewVariationDetails}
                 />

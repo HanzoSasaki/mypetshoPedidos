@@ -147,7 +147,7 @@ export default function SummaryPage() {
                   aria-label="Resumo de estoque brinquedos"
                 >
                   <Truck className="h-6 w-6 mr-4" />
-                  Resumo de estoque brinquedos
+             
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[700px] h-[80vh] w-[90vw]">
