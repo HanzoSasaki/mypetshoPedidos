@@ -49,7 +49,9 @@ export default function ReportsView({ orders, sandPrices }: ReportsViewProps) {
       const shopeeFixedFee = 4.00;
       
       const totalRevenue = sellPrice * data.orderCount;
-      const totalShopeeFee = (totalRevenue * shopeeFeePercentage) + (shopeeFixedFee * data.orderCount);
+      const twentyPercentFee = totalRevenue * shopeeFeePercentage;
+      const fixedFee = shopeeFixedFee * data.orderCount;
+      const totalShopeeFee = twentyPercentFee + fixedFee;
       const walletValue = totalRevenue - totalShopeeFee;
       const totalCost = costPrice * data.orderCount;
       const finalNetValue = walletValue - totalCost;
@@ -59,9 +61,13 @@ export default function ReportsView({ orders, sandPrices }: ReportsViewProps) {
         orderCount: data.orderCount,
         totalQuantity: data.totalQuantity,
         sellPrice,
+        subtotal: totalRevenue,
         walletValue,
         costPrice,
         finalNetValue,
+        totalCost,
+        twentyPercentFee,
+        fixedFee,
       };
     }).filter(Boolean);
 
@@ -145,8 +151,11 @@ export default function ReportsView({ orders, sandPrices }: ReportsViewProps) {
                 <TableHead>Variação</TableHead>
                 <TableHead className="text-right">Pedidos</TableHead>
                 <TableHead className="text-right">Preço Venda</TableHead>
+                <TableHead className="text-right">Subtotal</TableHead>
+                <TableHead className="text-right">Custo Total</TableHead>
+                <TableHead className="text-right">Taxa 20%</TableHead>
+                <TableHead className="text-right">Taxa Fixa</TableHead>
                 <TableHead className="text-right">Valor Carteira</TableHead>
-                <TableHead className="text-right">Custo</TableHead>
                 <TableHead className="text-right">Líquido Final</TableHead>
               </TableRow>
             </TableHeader>
@@ -156,8 +165,11 @@ export default function ReportsView({ orders, sandPrices }: ReportsViewProps) {
                   <TableCell>{item.variationName}</TableCell>
                   <TableCell className="text-right">{item.orderCount}</TableCell>
                   <TableCell className="text-right">R$ {item.sellPrice.toFixed(2).replace('.', ',')}</TableCell>
+                  <TableCell className="text-right">R$ {item.subtotal.toFixed(2).replace('.', ',')}</TableCell>
+                  <TableCell className="text-right text-red-600">R$ {item.totalCost.toFixed(2).replace('.', ',')}</TableCell>
+                  <TableCell className="text-right text-red-600">R$ {item.twentyPercentFee.toFixed(2).replace('.', ',')}</TableCell>
+                  <TableCell className="text-right text-red-600">R$ {item.fixedFee.toFixed(2).replace('.', ',')}</TableCell>
                   <TableCell className="text-right">R$ {item.walletValue.toFixed(2).replace('.', ',')}</TableCell>
-                  <TableCell className="text-right">R$ {item.costPrice.toFixed(2).replace('.', ',')}</TableCell>
                   <TableCell className="text-right font-bold text-green-600">R$ {item.finalNetValue.toFixed(2).replace('.', ',')}</TableCell>
                 </TableRow>
               ))}
