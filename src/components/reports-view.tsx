@@ -25,17 +25,44 @@ interface ReportsViewProps {
 export default function ReportsView({ orders, sandPrices }: ReportsViewProps) {
 
   const analysisData = useMemo(() => {
-    const variationsMap = new Map<string, { orderCount: number; totalQuantity: number }>();
+    const variationsMap = new Map<string, {
+        orderIds: Set<string>;
+        totalQuantity: number;
+        subtotal: number;
+        twentyPercentFee: number;
+        fixedFee: number;
+    }>();
 
     orders.forEach(order => {
-      order.products.forEach(product => {
-        if (product.variation) {
-          const entry = variationsMap.get(product.variation) || { orderCount: 0, totalQuantity: 0 };
-          entry.orderCount += 1; // Increment order count for each product instance found
-          entry.totalQuantity += product.quantity;
-          variationsMap.set(product.variation, entry);
-        }
-      });
+        order.products.forEach(product => {
+            if (product.variation) {
+                const priceInfo = sandPrices.find(p => p.nome === product.variation);
+                if (!priceInfo) return;
+
+                const sellPrice = parseFloat(priceInfo.venda.replace(',', '.'));
+
+                const entry = variationsMap.get(product.variation) || {
+                    orderIds: new Set<string>(),
+                    totalQuantity: 0,
+                    subtotal: 0,
+                    twentyPercentFee: 0,
+                    fixedFee: 0,
+                };
+
+                const productRevenue = sellPrice * product.quantity;
+
+                entry.totalQuantity += product.quantity;
+                entry.subtotal += productRevenue;
+                entry.twentyPercentFee += productRevenue * 0.20;
+
+                if (!entry.orderIds.has(order.id)) {
+                    entry.orderIds.add(order.id);
+                    entry.fixedFee += 4.00;
+                }
+
+                variationsMap.set(product.variation, entry);
+            }
+        });
     });
 
     const detailedData = Array.from(variationsMap.entries()).map(([variationName, data]) => {
@@ -45,29 +72,23 @@ export default function ReportsView({ orders, sandPrices }: ReportsViewProps) {
       const sellPrice = parseFloat(priceInfo.venda.replace(',', '.'));
       const costPrice = parseFloat(priceInfo.Custo.replace(',', '.'));
 
-      const shopeeFeePercentage = 0.20;
-      const shopeeFixedFee = 4.00;
-      
-      const totalRevenue = sellPrice * data.orderCount;
-      const twentyPercentFee = totalRevenue * shopeeFeePercentage;
-      const fixedFee = shopeeFixedFee * data.orderCount;
-      const totalShopeeFee = twentyPercentFee + fixedFee;
-      const walletValue = totalRevenue - totalShopeeFee;
-      const totalCost = costPrice * data.orderCount;
+      const totalCost = costPrice * data.orderIds.size; // Total cost based on number of orders
+      const totalShopeeFee = data.twentyPercentFee + data.fixedFee;
+      const walletValue = data.subtotal - totalShopeeFee;
       const finalNetValue = walletValue - totalCost;
 
       return {
         variationName,
-        orderCount: data.orderCount,
+        orderCount: data.orderIds.size,
         totalQuantity: data.totalQuantity,
         sellPrice,
-        subtotal: totalRevenue,
+        subtotal: data.subtotal,
         walletValue,
         costPrice,
         finalNetValue,
         totalCost,
-        twentyPercentFee,
-        fixedFee,
+        twentyPercentFee: data.twentyPercentFee,
+        fixedFee: data.fixedFee,
       };
     }).filter(Boolean);
 
